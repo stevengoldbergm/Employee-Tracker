@@ -1,3 +1,6 @@
+-- Query Scratchpad  --
+-- ----------------- --
+
 -- View all Departments
 SELECT 
     name department_name,
@@ -61,6 +64,3 @@ VALUES ("Steve", "GOOB", "9", NULL)
 UPDATE employee
 SET role_id = `${roleId}`
 WHERE id = `${employeeId}`;
-
--- Most of the prompts are intended to be selected from a list. 
--- Experiment with Inquirer to define a list object with a query before asking the question.

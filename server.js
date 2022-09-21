@@ -8,13 +8,13 @@ const db = mysql.createConnection(
     {
         host: 'localhost',
         user: 'root',
-        password: 'password',
+        password: 'password', // Other users will likely need to change this value
         database: 'departments_db'
     },
     console.log('Connected to the departments_db database.')
 )
 
-
+// Create the main menu
 async function mainMenu() {
     // Create an inquirer promise prompt
     const menu = await inquirer.prompt(
@@ -38,9 +38,10 @@ async function mainMenu() {
         // console.info(menu); Working
         // console.info(menu.selection); Working
 
-    // Use inquirer prompt to determine next steps:
+    // Use inquirer prompt results to determine next steps:
     switch(menu.selection) {
         case 'View All Departments':
+            // Call query to view all departments
             const allDepts = await viewAllDepartments();
                 // console.log(allDepts[0]) // Working
                 // console.log('\nAll Departments', allDepts) // Working
@@ -56,12 +57,13 @@ async function mainMenu() {
                     message: '\nWhat is the name of the new department?'
                 }
             )
-            // Call query to add department
+            // Call query to add a new department
             const newDepartment = await addDepartment(departmentQuestion.name)
             console.log("New Department Added!");
             break;            
 
         case 'View All Roles':
+            // Call query to view all roles
             const allRoles = await viewAllRoles();
                 // console.log(allRoles[0]) // Working
             console.table('\nAll Roles', allRoles)
@@ -88,7 +90,7 @@ async function mainMenu() {
                     choices: await roleDepartmentList()
                 }],
             )
-            // Pull the department ID from the roleQuestions.department value
+            // Generate the department ID using the roleQuestions.department value
                 // console.log(roleQuestions.department) // Working
             const roleId = await findRoleByDepartment(roleQuestions.department)
 
@@ -98,11 +100,12 @@ async function mainMenu() {
             break;
 
         case 'View All Employees':
+            // Call query to view all employees
             const allEmployees = await viewAllEmployees();
                 // console.log(allRoles[0]) // Working
             console.table('\nAll Employees', allEmployees);
-
             break;
+
         case 'Add Employee':
             // Add a new question line regarding the new employee
             const employeeQuestions = await inquirer.prompt([
@@ -130,7 +133,7 @@ async function mainMenu() {
                     choices: await employeeManagerList()
                 }],
             )
-            // Insert new employee into employee table
+            // Testing question results to ensure they're working
                 // console.log(employeeQuestions); // Working
 
             // Call queries to find role and manager IDs
@@ -144,6 +147,7 @@ async function mainMenu() {
             const newEmployee = await addEmployee(employeeQuestions.firstName, employeeQuestions.lastName, foundRoleId, foundManagerId)
             console.log("New Employee Added!");
             break;            
+
         case 'Update Employee Role':
             const updateRoleQuestion = await inquirer.prompt([
                 {
@@ -159,9 +163,10 @@ async function mainMenu() {
                     choices: await employeeRoleList()
                 },
             ])
-            // Use question results to update role
-            // console.log(updateRoleQuestion.employee, updateRoleQuestion.role); // working
+            // Use question results to find employee and role names 
+                // console.log(updateRoleQuestion.employee, updateRoleQuestion.role); // working
 
+            // Call queries to find employee and role IDs
             const foundEmployeeId = await findEmployeeId(updateRoleQuestion.employee)
                 // console.log(foundEmployeeId) // working
             const foundEmployeeRoleId = await findRoleId(updateRoleQuestion.role)
@@ -169,7 +174,6 @@ async function mainMenu() {
 
             const updatedRole = await updateRole(foundEmployeeId, foundEmployeeRoleId)
             console.log("Role Updated!"); // Working
-
             break;  
 
         case 'Quit':
@@ -180,44 +184,50 @@ async function mainMenu() {
 
 }
 
+// Quit the program
 function quit() {
+    console.log('\nGoodbye!')
     process.exit();
 }
 
+// Initialize the program
 function init() {
     mainMenu();
 }
 
-// Query functions
+// ---------- Query functions ---------- //
 
+// View All Departments
 async function viewAllDepartments() {
     // console.log('function start:') // Works
-    result = await db.promise().query(
-        `SELECT 
+    result = await db.promise().query(`
+        SELECT 
             name department, 
             id 
         FROM department 
-        ORDER BY id ASC;`
-    )
+        ORDER BY id ASC;
+    `)
     return result[0];
 }
 
+// View All Roles
 async function viewAllRoles() {
-    result = await db.promise().query(
-        `SELECT 
+    result = await db.promise().query(`
+        SELECT 
             r.title job_title, 
             r.id, d.name department, 
             r.salary 
         FROM role r 
         JOIN department d ON d.id =  r.department_id 
-        ORDER BY r.id ASC;`
-    )
+        ORDER BY r.id ASC;
+    `)
     return result[0];
 }
 
+// View All Employees
 async function  viewAllEmployees() {
-    result = await db.promise().query(
-        `SELECT 
+    result = await db.promise().query(`
+        SELECT 
             e.id employee_id, 
             e.first_name, e.last_name, 
             r.title job_title, 
@@ -227,20 +237,21 @@ async function  viewAllEmployees() {
         FROM department d 
         JOIN role r on d.id = r.department_id 
         JOIN employee e on r.id = e. role_id 
-        LEFT JOIN employee m on m.id = e.manager_id ORDER BY e.id ASC;`
-    )
+        LEFT JOIN employee m on m.id = e.manager_id ORDER BY e.id ASC;
+    `)
     return result[0];
 }
 
+// Add New Department
 async function addDepartment(newDepartment) {
     result = await db.promise().query(`
         INSERT INTO department (name)
         VALUES ("${newDepartment}");
-        
     `)
     return result;
 }
 
+// Generate Department List For Role Change Questions
 async function roleDepartmentList() {
     let departmentList = await db.promise().query(`
         SELECT 
@@ -255,6 +266,7 @@ async function roleDepartmentList() {
     return departmentMap;
 }
 
+// Add New Role
 async function addRole(title, salary, departmentId) {
     result = await db.promise().query(`
         INSERT INTO role (title, salary, department_id)
@@ -263,6 +275,7 @@ async function addRole(title, salary, departmentId) {
     return result;
 }
 
+// Find Department ID Using Role Department Value
 async function findRoleByDepartment(departmentName) {
     // console.log('department name: ', departmentName)
     const departmentIdTable = await db.promise().query(`
@@ -279,6 +292,7 @@ async function findRoleByDepartment(departmentName) {
     return finalId;
 }
 
+// Generate Employee List For Role Update Questions
 async function employeeList() {
     let fullEmployeeList = await db.promise().query(`
         SELECT 
@@ -293,6 +307,7 @@ async function employeeList() {
     return employeeMap;
 }
 
+// Generate Role List For Role Change Questions
 async function employeeRoleList() {
     let roleList = await db.promise().query(`
         SELECT 
@@ -307,6 +322,7 @@ async function employeeRoleList() {
     return roleMap;
 }
 
+// Generate Manager List For New Employee Question
 async function employeeManagerList() {
     let managerList = await db.promise().query(`
         SELECT 
@@ -323,13 +339,14 @@ async function employeeManagerList() {
     return managerMap;
 }
 
+// Find Role ID From Role Title
 async function findRoleId(roleName) {
     // console.log('role name: ', roleName) // working
     const roleIdTable = await db.promise().query(`
-    SELECT 
-        id
-    FROM role
-    WHERE title = "${roleName}";    
+        SELECT 
+            id
+        FROM role
+        WHERE title = "${roleName}";    
     `);
     roleId = roleIdTable.shift();
         // console.log(roleId); // Working
@@ -339,6 +356,7 @@ async function findRoleId(roleName) {
     return finalId;
 }
 
+// Find Employee ID From (concatenated) Employee Name
 async function findEmployeeId(EmployeeName) {
         // console.log('Employee name: ', EmployeeName); // Working
     // Split the EmployeeName into an array with two values
@@ -347,11 +365,11 @@ async function findEmployeeId(EmployeeName) {
     eLastName = EmployeeName[1];
         // console.log(eFirstName, eLastName); // Working
     const EmployeeIdTable = await db.promise().query(`
-    SELECT 
-        id
-    FROM employee
-    WHERE first_name = "${eFirstName}"
-    AND last_name = "${eLastName}";    
+        SELECT 
+            id
+        FROM employee
+        WHERE first_name = "${eFirstName}"
+        AND last_name = "${eLastName}";    
     `);
     EmployeeId = EmployeeIdTable.shift();
         // console.log(EmployeeId); // Working
@@ -361,6 +379,7 @@ async function findEmployeeId(EmployeeName) {
     return finalId;
 }
 
+// Find Manager ID From (concatenated) Manager Name
 async function findManagerId(managerName) {
         // console.log('manager name: ', managerName); // Working
     // Split the managerName into an array with two values
@@ -369,11 +388,11 @@ async function findManagerId(managerName) {
     mLastName = managerName[1];
         // console.log(mFirstName, mLastName); // Working
     const managerIdTable = await db.promise().query(`
-    SELECT 
-        id
-    FROM employee
-    WHERE first_name = "${mFirstName}"
-    AND last_name = "${mLastName}";    
+        SELECT 
+            id
+        FROM employee
+        WHERE first_name = "${mFirstName}"
+        AND last_name = "${mLastName}";    
     `);
     managerId = managerIdTable.shift();
         // console.log(managerId); // Working
@@ -383,13 +402,14 @@ async function findManagerId(managerName) {
     return finalId;
 }
 
+// Find Department ID From Role Department Name
 async function findRoleByDepartment(departmentName) {
     // console.log('department name: ', departmentName)
     const departmentIdTable = await db.promise().query(`
-    SELECT 
-        id
-    FROM department
-    WHERE name = "${departmentName}";    
+        SELECT 
+            id
+        FROM department
+        WHERE name = "${departmentName}";    
     `);
     departmentId = departmentIdTable.shift();
         // console.log(departmentId); // Working
@@ -399,6 +419,7 @@ async function findRoleByDepartment(departmentName) {
     return finalId;
 }
 
+// Add New Employee to Employee Table
 async function addEmployee(firstName, lastName, roleId, managerId) {
         // console.log("managerid:", managerId); 
     if (managerId !== 0) {
@@ -413,6 +434,7 @@ async function addEmployee(firstName, lastName, roleId, managerId) {
     return result;
 }
 
+// Update Employee Role
 async function updateRole(employeeId, roleId) {
     result = await db.promise().query(`
         UPDATE employee
@@ -422,6 +444,7 @@ async function updateRole(employeeId, roleId) {
     return result;
 }
 
+// Start Program
 console.info('\n\n***---- Employee Tracker ----***\n')
 init();
 
