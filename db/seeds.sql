@@ -15,7 +15,7 @@ VALUES
     ("Representative", 38000, 2),
     ("Sales Manager", 45000, 2),
 -- Marketing
-    ("Analyst", 50000, 3),
+    ("Marketing Analyst", 50000, 3),
     ("Specialist", 55000, 3),
     ("Marketing Manager", 70000, 3);
 
